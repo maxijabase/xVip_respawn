@@ -1,0 +1,39 @@
+"Phrases"
+{
+    "Call Medic To Respawn"
+    {
+        "en"        "Call \"MEDIC\" to respawn."
+        "es"        "Llame \"MEDIC\" para reaparecer."
+        "pt"        "Chame \"MEDIC\" para reviver."
+    }
+    "Press F6 To Save Replay"
+    {
+        "en"        "Press F6 to save a replay of this life."
+        "es"        "Presione F6 para guardar una grabación de esta vida."
+        "pt"        "Aperte F6 para salvar um replay dessa vida."
+    }
+    "Menu Title"
+    {
+    	"en" "Select a respawn mode"
+    	"es" "Seleccione un modo de respawn"
+    	"pt" "Selecione un modo de respawn"
+    }
+    "PressingE"
+    {
+    	"en" "Pressing E"
+    	"es" "Presionando E"
+    	"pt" "Apertando E"
+    }
+    "AlwaysInstant"
+    {
+    	"en" "Always instant"
+    	"es" "Siempre instantáneo"
+    	"pt" "Sempre instantâneo"
+    }
+    "Options Saved"
+    {
+    	"en" "Respawn options saved!"
+    	"es" "Opciones de respawn actualizadas."
+    	"pt" "Opções de respawn atualizadas."
+    }
+}
