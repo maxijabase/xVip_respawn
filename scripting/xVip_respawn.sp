@@ -44,14 +44,12 @@ Handle g_hHUDSynchronizer;
 bool g_bZatoichi[MAXPLAYERS + 1];
 
 ConVar g_cvEnabled;
-ConVar g_cvAllowedFlags;
 
 public void OnPluginStart()
 {
 	CreateConVar("vip_respawn_version", PLUGIN_VERSION, .flags = FCVAR_NOTIFY | FCVAR_DONTRECORD);
 	
 	g_cvEnabled = CreateConVar("vip_respawn_enabled", "1", "Enable/disable the plugin", _, true, 0.0, true, 1.0);
-	g_cvAllowedFlags = CreateConVar("vip_respawn_flag", "p", "Flags required to enable the respawn privilege.");
 	
 	HookEvent("player_death", OnPlayerDeath, EventHookMode_Post);
 	HookEvent("player_death", OnPlayerDeath_Pre, EventHookMode_Pre);
@@ -159,7 +157,7 @@ public int CookieHandler(Menu menu, MenuAction action, int param1, int param2)
 				g_iRespawnMode[param1] = RespawnMode_AlwaysInstant;
 			}
 			
-			PrintToChat(param1, "[SM] %t", "Options Saved");
+			xVip_Reply(param1, "[SM] %t", "Options Saved");
 		}
 		
 		case MenuAction_Cancel:
