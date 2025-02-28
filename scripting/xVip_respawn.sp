@@ -4,10 +4,14 @@
 #include <sdktools>
 #include <xVip>
 
+#undef REQUIRE_PLUGIN
+#include <updater>
+
 #pragma semicolon 1
 #pragma newdecls required
 
 #define PLUGIN_VERSION "2.3"
+#define UPDATE_URL "https://raw.githubusercontent.com/maxijabase/xVip_respawn/main/updatefile.txt"
 
 public Plugin myinfo = 
 {
@@ -44,12 +48,14 @@ Handle g_hHUDSynchronizer;
 bool g_bZatoichi[MAXPLAYERS + 1];
 
 ConVar g_cvEnabled;
+ConVar g_cvDebug;
 
 public void OnPluginStart()
 {
 	CreateConVar("vip_respawn_version", PLUGIN_VERSION, .flags = FCVAR_NOTIFY | FCVAR_DONTRECORD);
 	
 	g_cvEnabled = CreateConVar("vip_respawn_enabled", "1", "Enable/disable the plugin", _, true, 0.0, true, 1.0);
+	g_cvDebug = CreateConVar("sm_viprespawn_debug", "0", "Enable/disable debug messages", _, true, 0.0, true, 1.0);
 	
 	HookEvent("player_death", OnPlayerDeath, EventHookMode_Post);
 	HookEvent("player_death", OnPlayerDeath_Pre, EventHookMode_Pre);
@@ -75,6 +81,11 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_respawnmode", CMD_RespawnMode);
 }
 
+public void Updater_OnLoaded()
+{
+	Updater_AddPlugin(UPDATE_URL);
+}
+
 public Action CMD_RespawnMode(int client, int args) {
 	SendCookieMenu(client);
 	return Plugin_Handled;
@@ -97,14 +108,40 @@ public Action OnVoiceMenu(int client, const char[] command, int argc)
 
 void OnMedicCall(int client)
 {
-	if (!g_cvEnabled.BoolValue || !xVip_IsVip(client) || IsPlayerAlive(client) || g_iRespawnMode[client] != RespawnMode_PressingE || !IsRespawnAllowed())
+	if (!g_cvEnabled.BoolValue)
 	{
+		DebugPrint("[Check] Plugin is disabled");
+		return;
+	}
+	
+	if (!xVip_IsVip(client))
+	{
+		DebugPrint("[Check] Client %d is not VIP", client);
+		return;
+	}
+	
+	if (IsPlayerAlive(client))
+	{
+		DebugPrint("[Check] Client %d is already alive", client);
+		return;
+	}
+	
+	if (g_iRespawnMode[client] != RespawnMode_PressingE)
+	{
+		DebugPrint("[Check] Client %d is not in pressing E mode", client);
+		return;
+	}
+	
+	if (!IsRespawnAllowed())
+	{
+		DebugPrint("[Check] Respawn is not allowed in current gamemode/state");
 		return;
 	}
 	
 	float secondsSinceLastRespawn = GetGameTime() - g_flLastRespawnTime[client];
 	if (secondsSinceLastRespawn < 3.0)
 	{
+		DebugPrint("[Check] Client %d respawn cooldown: %.1f seconds remaining", client, 3.0 - secondsSinceLastRespawn);
 		return;
 	}
 	
@@ -301,4 +338,20 @@ bool IsRespawnAllowedOnGameType(TFGameType gameType)
 bool IsRespawnAllowedOnRoundState(RoundState roundState)
 {
 	return roundState != RoundState_TeamWin && roundState != RoundState_Stalemate;
-} 
+}
+public void OnClientDisconnect(int client)
+{
+	g_flLastRespawnTime[client] = 0.0;
+	g_iRespawnMode[client] = RespawnMode_PressingE;
+	g_bZatoichi[client] = false;
+}
+
+void DebugPrint(const char[] message, any ...)
+{
+	if (g_cvDebug.BoolValue)
+	{
+		char out[1024];
+		VFormat(out, sizeof(out), message, 2);
+		PrintToServer(out);
+	}
+}

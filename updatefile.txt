@@ -1,0 +1,16 @@
+"Updater"
+{
+	"Information"
+	{
+		"Version"
+		{
+			"Latest"	"2.3"
+		}
+	}
+	
+	"Files"
+	{
+		"Plugin"	"Path_SM/plugins/xVip_respawn.smx"		
+		"Source"	"Path_SM/scripting/xVip_respawn.sp"
+	}
+}
