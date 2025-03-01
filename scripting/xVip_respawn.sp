@@ -10,7 +10,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION "2.3"
+#define PLUGIN_VERSION "2.4"
 #define UPDATE_URL "https://raw.githubusercontent.com/maxijabase/xVip_respawn/main/updatefile.txt"
 
 public Plugin myinfo = 
@@ -75,6 +75,10 @@ public void OnPluginStart()
 	
 	AddCommandListener(OnVoiceMenu, "voicemenu");
 	
+	// Add listeners for class and team changes
+	AddCommandListener(OnClassChange, "joinclass");
+	AddCommandListener(OnClassChange, "jointeam");
+	
 	AutoExecConfig(true);
 	LoadTranslations("xVip_respawn.phrases");
 	
@@ -106,42 +110,69 @@ public Action OnVoiceMenu(int client, const char[] command, int argc)
 	return Plugin_Continue;
 }
 
-void OnMedicCall(int client)
+public Action OnClassChange(int client, const char[] command, int argc)
+{
+	if (!CanClientRespawn(client, "class change"))
+	{
+		return Plugin_Continue;
+	}
+	
+	// Allow the class/team change to go through first, then respawn the player
+	CreateTimer(0.1, Timer_RespawnPlayer, GetClientUserId(client));
+	g_flLastRespawnTime[client] = GetGameTime();
+	
+	return Plugin_Continue;
+}
+
+// Helper function to check if a client can respawn
+bool CanClientRespawn(int client, const char[] action)
 {
 	if (!g_cvEnabled.BoolValue)
 	{
 		DebugPrint("[Check] Plugin is disabled");
-		return;
+		return false;
 	}
 	
 	if (!xVip_IsVip(client))
 	{
 		DebugPrint("[Check] Client %d is not VIP", client);
-		return;
+		return false;
 	}
 	
 	if (IsPlayerAlive(client))
 	{
 		DebugPrint("[Check] Client %d is already alive", client);
-		return;
-	}
-	
-	if (g_iRespawnMode[client] != RespawnMode_PressingE)
-	{
-		DebugPrint("[Check] Client %d is not in pressing E mode", client);
-		return;
+		return false;
 	}
 	
 	if (!IsRespawnAllowed())
 	{
 		DebugPrint("[Check] Respawn is not allowed in current gamemode/state");
-		return;
+		return false;
 	}
 	
 	float secondsSinceLastRespawn = GetGameTime() - g_flLastRespawnTime[client];
 	if (secondsSinceLastRespawn < 3.0)
 	{
 		DebugPrint("[Check] Client %d respawn cooldown: %.1f seconds remaining", client, 3.0 - secondsSinceLastRespawn);
+		return false;
+	}
+	
+	DebugPrint("[Check] Client %d can respawn via %s", client, action);
+	return true;
+}
+
+void OnMedicCall(int client)
+{
+	// Extra check specific to E-press respawn
+	if (g_iRespawnMode[client] != RespawnMode_PressingE)
+	{
+		DebugPrint("[Check] Client %d is not in pressing E mode", client);
+		return;
+	}
+	
+	if (!CanClientRespawn(client, "medic call"))
+	{
 		return;
 	}
 	
@@ -289,6 +320,7 @@ void ApplyInstantRespawn(int client, int attacker, bool isTriggerHurt)
 	}
 	
 	CreateTimer(time, Timer_RespawnPlayer, GetClientUserId(client));
+	g_flLastRespawnTime[client] = GetGameTime();
 }
 
 public Action Timer_RespawnPlayer(Handle timer, int userid)
